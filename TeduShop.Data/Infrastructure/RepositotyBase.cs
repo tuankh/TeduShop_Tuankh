@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Linq.Expressions;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace TeduShop.Data.Infrastructure
 {
-    public abstract class RepositoryBase<T> where T : class
+    public abstract class RepositoryBase<T> : IRepository<T> where T : class
     {
         #region Properties
+
         private TeduShopDbContext dataContext;
         private readonly IDbSet<T> dbSet;
 
@@ -19,11 +18,13 @@ namespace TeduShop.Data.Infrastructure
             get;
             private set;
         }
+
         protected TeduShopDbContext DbContext
         {
             get { return dataContext ?? (dataContext = DbFactory.Init()); }
         }
-        #endregion
+
+        #endregion Properties
 
         protected RepositoryBase(IDbFactory dbFactory)
         {
@@ -32,6 +33,7 @@ namespace TeduShop.Data.Infrastructure
         }
 
         #region Implementation
+
         public virtual void Add(T entity)
         {
             dbSet.Add(entity);
@@ -41,6 +43,7 @@ namespace TeduShop.Data.Infrastructure
         {
             dbSet.Attach(entity);
         }
+
         public virtual void Delete(T entity)
         {
             dbSet.Remove(entity);
@@ -54,6 +57,7 @@ namespace TeduShop.Data.Infrastructure
                 dbSet.Remove(obj);
             }
         }
+
         public virtual T GetSingleById(int id)
         {
             return dbSet.Find(id);
@@ -86,19 +90,20 @@ namespace TeduShop.Data.Infrastructure
             return query;
         }
 
-        public T GetsingleByCondition(Expression<Func<T, bool>> expression, string[] includes=null)
+        public T GetsingleByCondition(Expression<Func<T, bool>> expression, string[] includes = null)
         {
             return GetAll(includes).FirstOrDefault(expression);
         }
-        public virtual IQueryable<T> GetMulti(Expression<Func<T, bool>> predicate, string[] includes=null) 
+
+        public virtual IQueryable<T> GetMulti(Expression<Func<T, bool>> predicate, string[] includes = null)
         {
             // Handle Includes For Associated Objects If Applicable
 
             if (predicate != null && includes.Count() > 0)
             {
                 var query = dataContext.Set<T>().Include(includes.First());
-                foreach(var include in includes.Skip(1))
-                { 
+                foreach (var include in includes.Skip(1))
+                {
                     query = query.Include(include);
                     return query.Where<T>(predicate).AsQueryable<T>();
                 }
@@ -106,9 +111,9 @@ namespace TeduShop.Data.Infrastructure
             return dataContext.Set<T>().Where<T>(predicate).AsQueryable<T>();
         }
 
-        public virtual IQueryable<T> GetMultiPaging(Expression<Func<T, bool>> predicate, out int total, int index=0, int size= 10, string[] includes = null)
+        public virtual IQueryable<T> GetMultiPaging(Expression<Func<T, bool>> predicate, out int total, int index = 0, int size = 10, string[] includes = null)
         {
-            int skipCount=index*size;
+            int skipCount = index * size;
             IQueryable<T> _resetSet;
 
             // Handle Includes For Associated Objects If Applicable
@@ -116,23 +121,29 @@ namespace TeduShop.Data.Infrastructure
             if (includes != null && includes.Count() > 0)
             {
                 var query = dataContext.Set<T>().Include(includes.First());
-                foreach (var include in includes.Skip(1))               
+                foreach (var include in includes.Skip(1))
                     query = query.Include(include);
-                    _resetSet = predicate != null ? query.Where <T>(predicate).AsQueryable():query.AsQueryable();               
+                _resetSet = predicate != null ? query.Where<T>(predicate).AsQueryable() : query.AsQueryable();
             }
             else
             {
                 _resetSet = predicate != null ? dataContext.Set<T>().Where<T>(predicate).AsQueryable() : dataContext.Set<T>().AsQueryable();
             }
-            _resetSet = skipCount ==0? _resetSet.Take(size):_resetSet.Skip(skipCount).Take(size);
+            _resetSet = skipCount == 0 ? _resetSet.Take(size) : _resetSet.Skip(skipCount).Take(size);
             total = _resetSet.Count();
             return _resetSet.AsQueryable();
         }
 
-        public bool CheckContains(Expression<Func<T, bool>> predicate) 
+        public bool CheckContains(Expression<Func<T, bool>> predicate)
         {
             return dataContext.Set<T>().Count<T>(predicate) > 0;
         }
+
+        public T GetSingleByCondition(Expression<Func<T, bool>> expression, string[] includes = null)
+        {
+            throw new NotImplementedException();
+        }
     }
-    #endregion
+
+    #endregion Implementation
 }

@@ -20,7 +20,7 @@ namespace TeduShop.Data.Infrastructure
 
         // Mark an entity by int ID
         T GetSingleById(int id);
-        T GetSingleByCondition(Expression<Func<T, bool>> expression, string[] includes=null);
+        T GetSingleByCondition(Expression<Func<T, bool>> predicate, params string[] includes);
         IQueryable<T> GetAll(string[]includes=null);
         IQueryable<T> GetMulti(Expression<Func<T, bool>> predicate, string[] includes = null);
 
