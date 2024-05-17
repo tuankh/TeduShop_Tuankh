@@ -12,9 +12,9 @@
         protected override void DisposeCore()
         {
             if (dbContext != null)
-            {
+            
                 dbContext.Dispose();
-            }
+           
         }
     }
 }
